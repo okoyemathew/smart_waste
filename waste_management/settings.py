@@ -13,14 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-%r@7##wyjunyw93rz3^url%_=yp!5p*3lco@$8apa4hmo@l79v')
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        'DJANGO_ALLOWED_HOSTS',
-        'localhost,127.0.0.1,testserver,smart-waste-1-bugu.onrender.com'
-    ).split(',')
-    if host.strip()
-]
+ALLOWED_HOSTS = ['*']
 
 # Installed apps
 INSTALLED_APPS = [
