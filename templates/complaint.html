@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block body_class %}bg-complaint{% endblock %}
+
+{% block content %}
+
+<section class="landing-page">
+    <div class="landing-header landing-toolbar">
+        <div>
+            <h1>Report Waste</h1>
+            <p>Send a location, description, and photo so the right team can respond faster.</p>
+        </div>
+        <div class="landing-actions">
+            <button type="button" class="btn btn-outline-light" onclick="history.back()">Back</button>
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <div class="landing-content">
+        <div class="card p-4 shadow mx-auto" style="max-width: 500px;">
+            <h3 class="text-center mb-3">Complaint Details</h3>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <select class="form-control mb-3" name="waste_type" required>
+                    <option value="" disabled selected>Select Waste Type</option>
+                    {% for type in waste_types %}
+                    <option value="{{ type.id }}">{{ type.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <input class="form-control mb-3" type="text" name="location" placeholder="Location" required>
+
+                <textarea class="form-control mb-3" name="description" placeholder="Description" required></textarea>
+
+                <label class="form-label">Waste Photo</label>
+
+                <div class="d-flex gap-2 mb-2">
+                    <label for="gallery-image" class="btn btn-outline-secondary flex-fill">
+                        Choose Photo
+                    </label>
+                    <button type="button" id="open-camera" class="btn btn-outline-primary flex-fill">
+                        &#128247; Open Camera
+                    </button>
+                </div>
+
+                <input type="file" id="gallery-image" name="image" class="d-none" accept="image/*" required>
+                <input type="file" id="camera-fallback" class="d-none" accept="image/*" capture="environment">
+
+                <div id="camera-box" class="d-none mb-3">
+                    <video id="camera-preview" class="w-100 rounded border mb-2" autoplay playsinline></video>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="capture-photo" class="btn btn-success flex-fill">
+                            Use This Photo
+                        </button>
+                        <button type="button" id="close-camera" class="btn btn-secondary flex-fill">
+                            Close Camera
+                        </button>
+                    </div>
+                    <canvas id="camera-canvas" class="d-none"></canvas>
+                </div>
+
+                <small id="photo-status" class="text-muted d-block mb-3">
+                    Tap Open Camera to take a photo now.
+                </small>
+               
+                <button class="btn btn-primary w-100">Submit Complaint</button>
+               
+            </form>
+
+        </div>
+    </div>
+</section>
+
+<script>
+    var galleryInput = document.getElementById('gallery-image');
+    var cameraFallback = document.getElementById('camera-fallback');
+    var openCameraButton = document.getElementById('open-camera');
+    var cameraBox = document.getElementById('camera-box');
+    var cameraPreview = document.getElementById('camera-preview');
+    var capturePhotoButton = document.getElementById('capture-photo');
+    var closeCameraButton = document.getElementById('close-camera');
+    var cameraCanvas = document.getElementById('camera-canvas');
+    var photoStatus = document.getElementById('photo-status');
+    var cameraStream = null;
+
+    function copyFileToUploadInput(file) {
+        if (!window.DataTransfer) {
+            photoStatus.textContent = 'This browser cannot attach camera photos here. Please use Choose Photo.';
+            return false;
+        }
+
+        var files = new DataTransfer();
+        files.items.add(file);
+        galleryInput.files = files.files;
+        return true;
+    }
+
+    function showPhotoReady(input) {
+        if (input.files && input.files.length > 0) {
+            photoStatus.textContent = 'Photo selected and ready to upload.';
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+            cameraStream = null;
+        }
+
+        cameraPreview.srcObject = null;
+        cameraBox.classList.add('d-none');
+    }
+
+    galleryInput.addEventListener('change', function () {
+        showPhotoReady(galleryInput);
+    });
+
+    cameraFallback.addEventListener('change', function () {
+        if (cameraFallback.files && cameraFallback.files.length > 0) {
+            if (copyFileToUploadInput(cameraFallback.files[0])) {
+                showPhotoReady(galleryInput);
+            }
+        }
+    });
+
+    openCameraButton.addEventListener('click', function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            cameraFallback.click();
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: 'environment' }
+            },
+            audio: false
+        }).then(function (stream) {
+            cameraStream = stream;
+            cameraPreview.srcObject = stream;
+            cameraBox.classList.remove('d-none');
+            photoStatus.textContent = 'Camera is open. Click Use This Photo when ready.';
+        }).catch(function () {
+            cameraFallback.click();
+        });
+    });
+
+    capturePhotoButton.addEventListener('click', function () {
+        var width = cameraPreview.videoWidth;
+        var height = cameraPreview.videoHeight;
+
+        if (!width || !height) {
+            photoStatus.textContent = 'Camera is still loading. Please try again.';
+            return;
+        }
+
+        cameraCanvas.width = width;
+        cameraCanvas.height = height;
+        cameraCanvas.getContext('2d').drawImage(cameraPreview, 0, 0, width, height);
+
+        cameraCanvas.toBlob(function (blob) {
+            var file = new File([blob], 'waste-photo.jpg', { type: 'image/jpeg' });
+            if (copyFileToUploadInput(file)) {
+                photoStatus.textContent = 'Camera photo captured and ready to upload.';
+            }
+            stopCamera();
+        }, 'image/jpeg', 0.9);
+    });
+
+    closeCameraButton.addEventListener('click', function () {
+        stopCamera();
+        photoStatus.textContent = 'Tap Open Camera to take a photo now.';
+    });
+</script>
+
+{% endblock %}

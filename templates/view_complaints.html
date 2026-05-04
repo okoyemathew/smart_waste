@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block body_class %}bg-user{% endblock %}
+
+{% block content %}
+
+<section class="landing-page">
+    <div class="landing-header landing-toolbar">
+        <div>
+            <h1>My Complaints</h1>
+            <p>Review every waste issue you reported and check the latest status in one place.</p>
+        </div>
+        <div class="landing-actions">
+            <button type="button" class="btn btn-outline-light" onclick="history.back()">Back</button>
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <div class="landing-content">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Waste Type</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Image</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    {% if not complaint.is_cleared %}
+                    <tr>
+                        <td>{{ complaint.waste_type }}</td>
+                        <td>{{ complaint.location }}</td>
+                        <td>
+                            {% if complaint.status == "Cleaned" %}
+                            <span class="badge bg-success">{{ complaint.status }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">{{ complaint.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if complaint.image %}
+                            <img src="{{ complaint.image.url }}" width="100">
+                            {% else %}
+                            <span>No Image</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if complaint.status == "Cleaned" %}
+                            <form method="POST" action="{% url 'clear_citizen_complaint' complaint.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm" type="submit">
+                                    Clear
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No complaints yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block auto_refresh %}
+<script>
+setInterval(function () {
+    if (canAutoRefreshPage()) {
+        window.location.reload();
+    }
+}, 10000);
+</script>
+{% endblock %}

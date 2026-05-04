@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block body_class %}bg-landing{% endblock %}
+
+{% block content %}
+<section class="landing-hero">
+    <div class="hero-card">
+        <h1>Smart Waste Management System</h1>
+        <p>
+            Cleaner streets, faster response, and better coordination between citizens,
+            workers, and administrators.
+        </p>
+        <div class="hero-actions">
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">Create Account</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block body_class %}bg-admin{% endblock %}
+
+{% block content %}
+<section class="landing-page">
+    <div class="landing-header landing-toolbar">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p>Manage workers, recycling centers, waste categories, assignments, and user updates.</p>
+        </div>
+        <div class="landing-actions">
+        <form method="POST" action="{% url 'clear_complaints' %}" style="display:inline;">
+            {% csrf_token %}
+            <button class="btn btn-danger"
+                onclick="return confirm('Delete all complaints?')">
+                Clear All
+            </button>
+        </form>
+        </div>
+    </div>
+
+    <div class="landing-content">
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card p-3 shadow-sm">
+            <h5 class="mb-3">Add Worker</h5>
+            <form method="POST" action="{% url 'add_worker' %}">
+                {% csrf_token %}
+                <input class="form-control mb-2" type="text" name="username" placeholder="Worker Username" required>
+                <input class="form-control mb-2" type="email" name="email" placeholder="Worker Email (optional)">
+                <input class="form-control mb-2" type="password" name="password" placeholder="Temporary Password" required>
+                <input class="form-control mb-3" type="text" name="phone" placeholder="Phone Number" required>
+                <button class="btn btn-success btn-sm">Create Worker</button>
+            </form>
+        </div>
+
+        <div class="card p-3 shadow-sm mt-3">
+            <h5 class="mb-3">Existing Workers</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Phone</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for worker in workers %}
+                        <tr>
+                            <td>{{ worker.user.username }}</td>
+                            <td>{{ worker.phone }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'delete_worker' worker.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('Remove this worker account?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No workers yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 shadow-sm">
+            <h5 class="mb-3">Add Recycling Center</h5>
+            <form method="POST" action="{% url 'add_recycling_center' %}">
+                {% csrf_token %}
+                <input class="form-control mb-2" type="text" name="name" placeholder="Center Name" required>
+                <input class="form-control mb-3" type="text" name="location" placeholder="Center Location" required>
+                <button class="btn btn-primary btn-sm">Add Center</button>
+            </form>
+        </div>
+
+        <div class="card p-3 shadow-sm mt-3">
+            <h5 class="mb-3">Existing Recycling Centers</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Location</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for center in centers %}
+                        <tr>
+                            <td>{{ center.name }}</td>
+                            <td>{{ center.location }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'delete_recycling_center' center.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('Remove this recycling center?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No recycling centers yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 shadow-sm mb-4">
+    <h5 class="mb-3">Add Waste Category and Defaults</h5>
+    <form method="POST" action="{% url 'add_waste_category' %}">
+        {% csrf_token %}
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input class="form-control" type="text" name="name" placeholder="Category Name" required>
+            </div>
+            <div class="col-md-4">
+                <select name="default_worker" class="form-control">
+                    <option value="" selected>No Default Worker</option>
+                    {% for w in workers %}
+                    <option value="{{ w.id }}">{{ w.user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="default_center" class="form-control">
+                    <option value="" selected>No Default Center</option>
+                    {% for center in centers %}
+                    <option value="{{ center.id }}">{{ center.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-dark btn-sm mt-3">Add Category</button>
+    </form>
+</div>
+
+<div class="card p-3 shadow-sm mb-4">
+    <h5 class="mb-3">Remove Waste Category</h5>
+    <form method="POST" action="{% url 'delete_waste_category' %}" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-md-9">
+            <label class="form-label mb-1">Select Waste Category</label>
+            <select name="category_id" class="form-control" required>
+                <option value="" selected disabled>Choose category to remove</option>
+                {% for category in waste_categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Remove selected waste category?')">
+                Remove Category
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card p-3 shadow-sm mb-4">
+    <h5 class="mb-3">Existing Waste Categories</h5>
+    {% for category in waste_categories %}
+    <form id="category-form-{{ category.id }}" method="POST" action="{% url 'update_waste_category' category.id %}">
+        {% csrf_token %}
+    </form>
+    {% endfor %}
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="min-width: 220px;">Category</th>
+                    <th style="min-width: 220px;">Default Worker</th>
+                    <th style="min-width: 220px;">Default Center</th>
+                    <th style="min-width: 140px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in waste_categories %}
+                <tr>
+                    <td>
+                        <input form="category-form-{{ category.id }}" class="form-control form-control-sm" type="text" name="name" value="{{ category.name }}" required>
+                    </td>
+                    <td>
+                        <select form="category-form-{{ category.id }}" name="default_worker" class="form-control form-control-sm">
+                            <option value="">No Default Worker</option>
+                            {% for w in workers %}
+                            <option value="{{ w.id }}" {% if category.default_worker and category.default_worker.id == w.id %}selected{% endif %}>
+                                {{ w.user.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select form="category-form-{{ category.id }}" name="default_center" class="form-control form-control-sm">
+                            <option value="">No Default Center</option>
+                            {% for center in centers %}
+                            <option value="{{ center.id }}" {% if category.default_center and category.default_center.id == center.id %}selected{% endif %}>
+                                {{ center.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <button form="category-form-{{ category.id }}" type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No waste categories yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered align-middle mb-0">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Waste</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Assign</th>
+                <th>Update User</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for c in complaints %}
+            <tr>
+                <td>{{ c.user.username }}</td>
+                <td>{{ c.waste_type }}</td>
+                <td>{{ c.location }}</td>
+
+                <td>
+                    {% if c.status == "Pending" %}
+                    <span class="badge bg-warning">Pending</span>
+                    {% else %}
+                    <span class="badge bg-success">Cleaned</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <form method="POST" action="{% url 'assign_worker' c.id %}">
+                        {% csrf_token %}
+
+                        <select name="worker" class="form-control mb-2" required>
+                            <option value="" disabled selected>Select Worker</option>
+                            {% for w in workers %}
+                            <option value="{{ w.id }}"
+                                {% if c.current_assignment and c.current_assignment.worker.id == w.id %}selected{% elif not c.current_assignment and c.waste_type and c.waste_type.default_worker and c.waste_type.default_worker.id == w.id %}selected{% endif %}>
+                                {{ w.user.username }}
+                            </option>
+                            {% empty %}
+                            <option value="" disabled>No workers available</option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="center" class="form-control mb-2" required>
+                            <option value="" disabled selected>Select Recycling Center</option>
+                            {% for center in centers %}
+                            <option value="{{ center.id }}"
+                                {% if c.current_assignment and c.current_assignment.recycling_center.id == center.id %}selected{% elif not c.current_assignment and c.waste_type and c.waste_type.default_center and c.waste_type.default_center.id == center.id %}selected{% endif %}>
+                                {{ center.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="status" class="form-control mb-2" required>
+                            <option value="" disabled selected>Select Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Cleaned">Cleaned</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm">Assign</button>
+                    </form>
+                </td>
+
+                <td>
+                    {% if c.status == "Cleaned" %}
+                        {% if c.user_update_sent %}
+                            <span class="badge bg-success d-block mb-2">User Updated</span>
+                        {% endif %}
+                        <form method="POST" action="{% url 'notify_user' c.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-info btn-sm">Update User</button>
+                        </form>
+                    {% else %}
+                        <span class="text-muted">Waiting for completion</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    <a href="{% url 'logout' %}" class="btn btn-dark">Logout</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block auto_refresh %}
+<script>
+setInterval(function () {
+    if (canAutoRefreshPage()) {
+        window.location.reload();
+    }
+}, 10000);
+</script>
+{% endblock %}

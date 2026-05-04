@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block body_class %}bg-worker{% endblock %}
+{% block content %}
+
+<section class="landing-page">
+    <div class="landing-header landing-toolbar">
+        <div>
+            <h1>Worker Dashboard</h1>
+            <p>View assigned waste reports, inspect complaint details, and mark completed cleanup work.</p>
+        </div>
+        <div class="landing-actions">
+            <button type="button" class="btn btn-outline-light" onclick="history.back()">Back</button>
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <div class="landing-content">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Waste Type</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Image</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    {% if not assignment.complaint.is_cleared %}
+                    <tr>
+                        <td>{{ assignment.complaint.waste_type }}</td>
+                        <td>{{ assignment.complaint.location }}</td>
+                        <td>
+                            <span class="badge bg-warning">
+                                {{ assignment.complaint.status }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if assignment.complaint.image %}
+                                <img src="{{ assignment.complaint.image.url }}" width="80">
+                            {% else %}
+                                No Image
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if assignment.complaint.status != "Cleaned" %}
+                                <form method="POST" action="{% url 'update_status' assignment.complaint.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-success btn-sm" type="submit">
+                                        Mark as Cleaned
+                                    </button>
+                                </form>
+                            {% else %}
+                                <form method="POST" action="{% url 'clear_worker_complaint' assignment.complaint.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button class="btn btn-danger btn-sm" type="submit">
+                                        Clear
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No assignments</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block auto_refresh %}
+<script>
+setInterval(function () {
+    if (canAutoRefreshPage()) {
+        window.location.reload();
+    }
+}, 10000);
+</script>
+{% endblock %}
