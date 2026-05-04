@@ -15,7 +15,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-%r@7##wyjunyw93rz3^
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
+    for host in os.getenv(
+        'DJANGO_ALLOWED_HOSTS',
+        'localhost,127.0.0.1,testserver,smart-waste-1-bugu.onrender.com'
+    ).split(',')
     if host.strip()
 ]
 
@@ -64,12 +67,8 @@ WSGI_APPLICATION = 'waste_management.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'waste_management',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
